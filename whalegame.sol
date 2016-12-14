@@ -3,11 +3,13 @@ pragma solidity ^0.4.6;
 contract Whalegame {
     address owner;
     Whale public whale;
-    uint curentPool;
+    uint currentPool; //in wei
     CurrentGameRules public currentGameRules;
     uint blocksToElapse = 21; // 21 blocks ~5 min
     uint feePercent = 2;
     bool riskTimeAdvantage = true;
+    uint minRisk = 5;
+    uint myStash;
     
     struct Whale {
         address whaleAddress;
@@ -20,6 +22,7 @@ contract Whalegame {
         uint blocksToElapse;
         uint feePercent;
         bool riskTimeAdvantage;
+        uint minRisk;
     }
     
     modifier onlyOwner{
@@ -37,19 +40,65 @@ contract Whalegame {
         }
     }
     
-    function updateWhale() private{
-        //TODO
+    function updateWhale(uint riskPercent) private{
+        whale = Whale(msg.sender, block.number, msg.value, riskPercent);
+    }
+    
+    function forceRiskRange(uint riskPercent) private returns(uint){
+        if (riskPercent > 100){
+            return 100;
+        }
+        if(riskPercent < minRisk) {
+            return minRisk;
+        }
+        return riskPercent;
+    }
+    
+    function applyFee(uint amount) private returns (uint){
+        myStash += amount / 100 * feePercent;
+        return amount / 100 * (100 - feePercent);
     }
     
     function updateGame() private{
-        //TODO
+        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk);
+        currentPool = applyFee(this.balance - myStash);
     }
     
     function () payable{
-        
+        //TODO
     }
     
     function redeem(){
-        
+        if (checkGameOver()){
+            bool redeemed = false;
+            uint reward = applyFee(currentPool / 100 * whale.riskPercent);
+            currentPool = 0; //safety
+            if( !redeemed && !whale.whaleAddress.send(reward) ){
+                throw;
+            } //todo: check how to protect against recursive call attack 
+            redeemed = true;
+        }
     }
+    
+    function withdraw(uint amount) onlyOwner{
+        //TODO
+    }
+    
+    function deposit() payable{
+        currentPool += msg.value;
+    }
+    
+    function setBlocksToElapse(uint _blocksToElapse) onlyOwner {
+        blocksToElapse = _blocksToElapse;
+    }
+    function setFeePercent(uint _feePercent) onlyOwner {
+        feePercent = _feePercent;
+    }
+    function setRiskTimeAdvantage(bool _riskTimeAdvantage) onlyOwner {
+        riskTimeAdvantage = _riskTimeAdvantage;
+    }
+    function setMinRisk(uint _minRisk) onlyOwner {
+        minRisk = _minRisk;
+    }
+    
 }
