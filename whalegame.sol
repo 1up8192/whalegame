@@ -10,6 +10,8 @@ contract Whalegame {
     bool riskTimeAdvantage = true;
     uint minRisk = 5;
     uint myStash;
+    bool killAfterRound = false;
+    uint step = 0.1; //fixme
     
     struct Whale {
         address whaleAddress;
@@ -23,6 +25,7 @@ contract Whalegame {
         uint feePercent;
         bool riskTimeAdvantage;
         uint minRisk;
+        uint step;
     }
     
     modifier onlyOwner{
@@ -60,12 +63,16 @@ contract Whalegame {
     }
     
     function updateGame() private{
-        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk);
+        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk, step);
         currentPool = applyFee(this.balance - myStash);
     }
     
     function () payable{
-        //TODO
+        if(!checkGameOver()){
+            
+        } else {
+            redeem();
+        }
     }
     
     function redeem(){
@@ -81,7 +88,23 @@ contract Whalegame {
     }
     
     function withdraw(uint amount) onlyOwner{
-        //TODO
+        if (amount > myStash){
+            if(!msg.sender.send(myStash)){
+                throw;
+            }
+        } else {
+            if(!msg.sender.send(amount)){
+                throw;
+            }
+        }
+    }
+    
+    function killSign() onlyOwner{
+        killAfterRound = true;
+    }
+    
+    function kill() onlyOwner{
+        suicide(owner);
     }
     
     function deposit() payable{
@@ -99,6 +122,10 @@ contract Whalegame {
     }
     function setMinRisk(uint _minRisk) onlyOwner {
         minRisk = _minRisk;
+    }
+    
+    function setStep(uint _step) onlyOwner {
+        step = _step;
     }
     
 }
