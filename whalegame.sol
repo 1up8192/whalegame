@@ -11,7 +11,7 @@ contract Whalegame {
     uint minRisk = 5;
     uint myStash;
     bool killAfterRound = false;
-    uint step = 0.1; //fixme
+    uint stepPercent = 10;
     
     struct Whale {
         address whaleAddress;
