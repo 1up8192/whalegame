@@ -25,7 +25,7 @@ contract Whalegame {
         uint feePercent;
         bool riskTimeAdvantage;
         uint minRisk;
-        uint step;
+        uint stepPercent;
     }
     
     modifier onlyOwner{
@@ -63,7 +63,7 @@ contract Whalegame {
     }
     
     function updateGame() private{
-        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk, step);
+        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk, stepPercent);
         currentPool = applyFee(this.balance - myStash);
     }
     
@@ -124,8 +124,8 @@ contract Whalegame {
         minRisk = _minRisk;
     }
     
-    function setStep(uint _step) onlyOwner {
-        step = _step;
+    function setStep(uint _stepPercent) onlyOwner {
+        stepPercent = _stepPercent;
     }
     
 }
