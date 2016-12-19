@@ -36,6 +36,9 @@ contract Whalegame {
         _;
     }
     
+    event newWhale(address whaleAddress, uint blockNumber, uint amount, uint riskPercent);
+    event whaleHasWon(address whaleAddress, uint blockNumber, uint amount, uint riskPercent);
+    
     function  checkGameOver() returns (bool){
         if (block.number >= whale.blockNumber + currentGameRules.blocksToElapse){
             return true;
