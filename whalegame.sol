@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.7;
 
 contract Whalegame {
     address owner;
@@ -18,6 +18,7 @@ contract Whalegame {
         uint blockNumber;
         uint amount;
         uint riskPercent;
+        bool redeemed;
     }
     
     struct CurrentGameRules{
@@ -44,7 +45,7 @@ contract Whalegame {
     }
     
     function updateWhale(uint riskPercent) private{
-        whale = Whale(msg.sender, block.number, msg.value, riskPercent);
+        whale = Whale(msg.sender, block.number, msg.value, riskPercent, false);
     }
     
     function forceRiskRange(uint riskPercent) private returns(uint){
@@ -57,9 +58,13 @@ contract Whalegame {
         return riskPercent;
     }
     
+    function percent(uint amount, uint percent) private returns (uint){
+        return amount / 100 * percent;
+    }
+    
     function applyFee(uint amount) private returns (uint){
-        myStash += amount / 100 * feePercent;
-        return amount / 100 * (100 - feePercent);
+        myStash += percent(amount, feePercent);
+        return percent(amount, (100 - feePercent));
     }
     
     function updateGame() private{
@@ -67,23 +72,45 @@ contract Whalegame {
         currentPool = applyFee(this.balance - myStash);
     }
     
-    function () payable{
+    function play (uint riskPercent) payable{
+        uint risk;
         if(!checkGameOver()){
-            
+            if (msg.value > whale.amount + percent(whale.amount, stepPercent)){
+                updateWhale(riskPercent);
+                risk = percent(msg.value, riskPercent);
+                currentPool += risk;
+                if(!msg.sender.send(msg.value-risk)){
+                    throw;
+                }
+            } else {
+                throw;
+            }
         } else {
             redeem();
+            if (msg.value > currentPool + percent(currentPool, stepPercent)){
+                updateWhale(riskPercent);
+                risk = percent(msg.value, riskPercent);
+                currentPool += risk;
+                if(!msg.sender.send(msg.value-risk)){
+                    throw;
+                }
+            } 
         }
     }
     
+    function (){
+        redeem();
+    }
+    
     function redeem(){
-        if (checkGameOver()){
-            bool redeemed = false;
+        if (checkGameOver() && !whale.redeemed){
             uint reward = applyFee(currentPool / 100 * whale.riskPercent);
             currentPool = 0; //safety
-            if( !redeemed && !whale.whaleAddress.send(reward) ){
+            if( !whale.whaleAddress.send(reward) || whale.redeemed ){
                 throw;
             } //todo: check how to protect against recursive call attack 
-            redeemed = true;
+            whale.redeemed = true;
+            updateGame();
         }
     }
     
