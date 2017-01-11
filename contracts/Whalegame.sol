@@ -1,17 +1,17 @@
 pragma solidity ^0.4.7;
 
 contract Whalegame {
-    address owner;
+    address public owner;
     Whale public whale;
-    uint currentPool; //in wei
+    uint public currentPool; //in wei
     CurrentGameRules public currentGameRules;
-    uint blocksToElapse = 21; // 21 blocks ~5 min
-    uint feePercent = 2;
-    bool riskTimeAdvantage = true;
-    uint minRisk = 5;
-    uint myStash;
-    bool killAfterRound = false;
-    uint stepPercent = 10;
+    uint public blocksToElapse = 21; // 21 blocks ~5 min
+    uint public feePercent = 2;
+    bool public riskTimeAdvantage = true;
+    uint public minRisk = 5;
+    uint public myStash;
+    bool public killAfterRound = false;
+    uint public stepPercent = 10;
 
     struct Whale {
         address whaleAddress;
