@@ -4,10 +4,12 @@ contract('Whalegame', function(accounts){
     var owner;
     wg.owner.call().then(function(_owner){
       owner = _owner;
-      assert.equal(account[0].toString, owner.toString, "addresses should be equal");
+      assert.equal(accounts[0], owner, "addresses should be equal");
+      console.log(accounts[0]);
+      console.log(owner);
     });
   });
-  it("should become the new whale", function(){
+  /*it("should become the new whale", function(){
     var wg = Whalegame.deployed();
     var lastAmount;
     var step;
@@ -21,7 +23,7 @@ contract('Whalegame', function(accounts){
     }).then(function(){
       return wg.whale.whaleAddress.call();
     }).then(function(address){
-      assert.equal(account[0].toString, address.toString, "addresses should be equal");
+      assert.equal(accounts[0].toString, address.toString, "addresses should be equal");
     });
-  });
+  });*/
 });
