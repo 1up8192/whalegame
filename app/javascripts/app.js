@@ -6,32 +6,29 @@ function setStatus(message) {
   status.innerHTML = message;
 };
 
-function refreshBalance() {
-  var meta = MetaCoin.deployed();
+function play() {
+  var whalegame = Whalegame.deployed();
 
-  meta.getBalance.call(account, {from: account}).then(function(value) {
-    var balance_element = document.getElementById("balance");
-    balance_element.innerHTML = value.valueOf();
-  }).catch(function(e) {
-    console.log(e);
-    setStatus("Error getting balance; see log.");
-  });
+  var risk = parseInt(document.getElementById("risk").value);
+
+  whalegame.play(risk, {from: account}).then(function() {
+      setStatus("Transaction complete!");
+    }).catch(function(e) {
+      console.log(e);
+      setStatus("Error; see log.");
+    });
 };
 
-function sendCoin() {
-  var meta = MetaCoin.deployed();
+function redeem() {
+  var whalegame = Whalegame.deployed();
 
-  var amount = parseInt(document.getElementById("amount").value);
-  var receiver = document.getElementById("receiver").value;
+  setStatus("Redeeming prize... (please wait)");
 
-  setStatus("Initiating transaction... (please wait)");
-
-  meta.sendCoin(receiver, amount, {from: account}).then(function() {
+  whalegame.redeem({from: account}).then(function() {
     setStatus("Transaction complete!");
-    refreshBalance();
   }).catch(function(e) {
     console.log(e);
-    setStatus("Error sending coin; see log.");
+    setStatus("Error; see log.");
   });
 };
 
