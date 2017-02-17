@@ -1,17 +1,20 @@
 var accounts;
 var account;
 
+var whalegame = Whalegame.deployed();
+
 function setStatus(message) {
   var status = document.getElementById("status");
   status.innerHTML = message;
 };
 
 function play() {
-  var whalegame = Whalegame.deployed();
 
   var risk = parseInt(document.getElementById("risk").value);
+  var amount = parseInt(document.getElementById("amount").value);
 
-  whalegame.play(risk, {from: account}).then(function() {
+
+  whalegame.play(risk, {from: account, value: amount}).then(function() {
       setStatus("Transaction complete!");
     }).catch(function(e) {
       console.log(e);
@@ -20,8 +23,6 @@ function play() {
 };
 
 function redeem() {
-  var whalegame = Whalegame.deployed();
-
   setStatus("Redeeming prize... (please wait)");
 
   whalegame.redeem({from: account}).then(function() {
@@ -31,6 +32,18 @@ function redeem() {
     setStatus("Error; see log.");
   });
 };
+
+var event = whalegame.newWhale();
+
+// watch for changes
+event.watch(function(error, result){
+    // result will contain various information
+    // including the argumets given to the Deposit
+    // call.
+    if (!error)
+        console.log(result);
+});
+
 
 window.onload = function() {
   web3.eth.getAccounts(function(err, accs) {

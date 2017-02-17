@@ -7,8 +7,9 @@ contract Whalegame {
     CurrentGameRules public currentGameRules;
     uint public blocksToElapse = 21; // 21 blocks ~5 min
     uint public feePercent = 2;
-    bool public riskTimeAdvantage = true;
+    bool public riskTimeAdvantage = true; //TODO
     uint public minRisk = 5;
+    uint public maxRisk = 90;
     uint public myStash;
     bool public killAfterRound = false;
     uint public stepPercent = 10;
@@ -26,6 +27,7 @@ contract Whalegame {
         uint feePercent;
         bool riskTimeAdvantage;
         uint minRisk;
+        uint maxRisk;
         uint stepPercent;
     }
 
@@ -52,8 +54,8 @@ contract Whalegame {
     }
 
     function forceRiskRange(uint riskPercent) private returns(uint){
-        if (riskPercent > 100){
-            return 100;
+        if (riskPercent > maxRisk){
+            return maxRisk;
         }
         if(riskPercent < minRisk) {
             return minRisk;
@@ -71,7 +73,7 @@ contract Whalegame {
     }
 
     function updateGame() private{
-        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk, stepPercent);
+        currentGameRules = CurrentGameRules(blocksToElapse, feePercent, riskTimeAdvantage, minRisk, maxRisk, stepPercent);
         currentPool = applyFee(this.balance - myStash);
     }
 
@@ -153,6 +155,10 @@ contract Whalegame {
     }
     function setMinRisk(uint _minRisk) onlyOwner {
         minRisk = _minRisk;
+    }
+
+    function setMaxRisk(uint _maxRisk) onlyOwner {
+        minRisk = _maxRisk;
     }
 
     function setStep(uint _stepPercent) onlyOwner {
