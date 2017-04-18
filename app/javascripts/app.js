@@ -8,7 +8,7 @@ import { default as contract } from 'truffle-contract'
 // Import our contract artifacts and turn them into usable abstractions.
 import whalegame_artifacts from '../../build/contracts/Whalegame.json'
 
-// MetaCoin is our usable abstraction, which we'll use through the code below.
+// WhaleGame is our usable abstraction, which we'll use through the code below.
 var Whalegame = contract(whalegame_artifacts);
 
 // The following code is simple to show off interacting with your contracts.
@@ -17,11 +17,46 @@ var Whalegame = contract(whalegame_artifacts);
 var accounts;
 var account;
 
+function createDataCell(content){
+  var cell = document.createElement("td");
+  cell.textContent = content;
+  return cell;
+}
+
+function createHeaderCell(content){
+  var cell = document.createElement("th");
+  cell.textContent = content;
+  return cell;
+}
+
+function addDataRow(table, columnList){
+  var row = document.createElement("tr");
+  columnList.map(createDataCell).forEach((cell) => {
+    row.appendChild(cell);
+  })
+  table.appendChild(row);
+}
+
+function addHeaderRow(table, columnHeaderList){
+  var row = document.createElement("tr");
+  columnHeaderList.map(createHeaderCell).forEach((cell) => {
+    row.appendChild(cell);
+  })
+  table.appendChild(row);
+}
+
+function limitRows(table, maxRows){
+  if(table.rows.length > maxRows + 1){
+    table.deleteRow(1);
+  }
+}
+
+
 window.App = {
   start: function() {
     var self = this;
 
-    // Bootstrap the MetaCoin abstraction for Use.
+    // Bootstrap the WhaleGame abstraction for Use.
     Whalegame.setProvider(web3.currentProvider);
 
     // Get the initial account balance so it can be displayed.
@@ -39,7 +74,6 @@ window.App = {
       accounts = accs;
       account = accounts[0];
 
-      self.refreshBalance();
     });
   },
 
@@ -48,40 +82,69 @@ window.App = {
     status.innerHTML = message;
   },
 
-  refreshBalance: function() {
+  play: function() {
     var self = this;
 
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.getBalance.call(account, {from: account});
-    }).then(function(value) {
-      var balance_element = document.getElementById("balance");
-      balance_element.innerHTML = value.valueOf();
+    var risk = parseInt(document.getElementById("risk").value);
+    var amount = parseInt(document.getElementById("amount").value);
+
+    var whalegame;
+    Whalegame.deployed().then(function(instance) {
+      whalegame = instance;
+      return whalegame.play(risk, {from: account, value: amount});
+    }).then(function() {
+      self.setStatus("Transaction complete!");
     }).catch(function(e) {
       console.log(e);
-      self.setStatus("Error getting balance; see log.");
+      self.setStatus("Error; see log.");
     });
   },
 
-  sendCoin: function() {
+  redeem: function() {
     var self = this;
 
-    var amount = parseInt(document.getElementById("amount").value);
-    var receiver = document.getElementById("receiver").value;
+    self.setStatus("Redeeming prize... (please wait)");
 
-    this.setStatus("Initiating transaction... (please wait)");
-
-    var meta;
-    MetaCoin.deployed().then(function(instance) {
-      meta = instance;
-      return meta.sendCoin(receiver, amount, {from: account});
+    var whalegame;
+    Whalegame.deployed().then(function(instance) {
+      whalegame = instance;
+      return whalegame.redeem({from: account});
     }).then(function() {
       self.setStatus("Transaction complete!");
-      self.refreshBalance();
     }).catch(function(e) {
       console.log(e);
-      self.setStatus("Error sending coin; see log.");
+      self.setStatus("Error; see log.");
+    });
+  },
+
+  watchEvent: function(){
+    var changesTable = document.getElementById("changes")
+    addHeaderRow(changesTable, ["Address", "Block nr.", "Amount", "Risk%"])
+
+    var whalegame;
+    Whalegame.deployed().then(function(instance) {
+      whalegame = instance;
+      var eventGreetingChanged = whalegame.newWhale();
+      var maxRowNum = 10;
+
+      // watch for changes
+      eventGreetingChanged.watch(function(error, result){
+        // result will contain various information
+        // including the argumets given to the Deposit
+        // call.
+        if (!error){
+          var whaleAddress = result.args.whaleAddress.valueOf();
+          var blockNumber = result.args.blockNumber.valueOf();
+          var amount = result.args.amount.valueOf();
+          var riskPercent = result.args.riskPercent.valueOf();
+          addDataRow(changesTable, [whaleAddress, blockNumber, amount, riskPercent])
+          limitRows(changesTable, maxRowNum);
+          //changes.innerHTML = "Old: " + oldGreeting + ", New: " + newGreeting + ", Changer: " + changerAddress;
+          console.log(result);
+        } else {
+          console.log(error);
+        }
+      });
     });
   }
 };
@@ -89,7 +152,7 @@ window.App = {
 window.addEventListener('load', function() {
   // Checking if Web3 has been injected by the browser (Mist/MetaMask)
   if (typeof web3 !== 'undefined') {
-    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
+    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 WhaleGame, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
     // Use Mist/MetaMask's provider
     window.web3 = new Web3(web3.currentProvider);
   } else {
@@ -99,70 +162,6 @@ window.addEventListener('load', function() {
   }
 
   App.start();
+
+  App.watchEvent();
 });
-/*___________________________________________________*/
-var accounts;
-var account;
-
-var whalegame = Whalegame.deployed();
-
-function setStatus(message) {
-  var status = document.getElementById("status");
-  status.innerHTML = message;
-};
-
-function play() {
-
-  var risk = parseInt(document.getElementById("risk").value);
-  var amount = parseInt(document.getElementById("amount").value);
-
-
-  whalegame.play(risk, {from: account, value: amount}).then(function() {
-      setStatus("Transaction complete!");
-    }).catch(function(e) {
-      console.log(e);
-      setStatus("Error; see log.");
-    });
-};
-
-function redeem() {
-  setStatus("Redeeming prize... (please wait)");
-
-  whalegame.redeem({from: account}).then(function() {
-    setStatus("Transaction complete!");
-  }).catch(function(e) {
-    console.log(e);
-    setStatus("Error; see log.");
-  });
-};
-
-var event = whalegame.newWhale();
-
-// watch for changes
-event.watch(function(error, result){
-    // result will contain various information
-    // including the argumets given to the Deposit
-    // call.
-    if (!error)
-        console.log(result);
-});
-
-
-window.onload = function() {
-  web3.eth.getAccounts(function(err, accs) {
-    if (err != null) {
-      alert("There was an error fetching your accounts.");
-      return;
-    }
-
-    if (accs.length == 0) {
-      alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-      return;
-    }
-
-    accounts = accs;
-    account = accounts[0];
-
-    refreshBalance();
-  });
-}
