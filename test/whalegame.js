@@ -1,15 +1,26 @@
+var Whalegame = artifacts.require("./Whalegame.sol");
+
 contract('Whalegame', function(accounts){
-  it("deployer should become owner", function(){
-    var wg = Whalegame.deployed();
-    var owner;
-    wg.owner.call().then(function(_owner){
-      owner = _owner;
-      console.log(accounts[0]);
-      console.log(owner);
-    }).then(function(){
-      assert.equal(owner, accounts[0], "addresses should be equal");
+  it("deployer should become owner", function() {
+    return Whalegame.deployed().then(function(instance) {
+        var wg = instance;
+        return wg.owner.call(accounts[0]);
+    }).then(function(owner) {
+      assert.equal(owner, accounts[0], "deployer should be owner");
     });
   });
+
+  it("valid first player is whale", function() {
+    return Whalegame.deployed().then(function(instance) {
+        var wg = instance;
+        wg.play.sendTransaction({from: accounts[0], value: 1000000000});
+    }).then(function(){
+        return wg.whale.whaleAddress.call(accounts[0]);
+    }).then(function(whaleAddress) {
+      assert.equal(whaleAddress, accounts[0], "valid first player should be new whale");
+    });
+  });
+
   /*it("should become the new whale", function(){
     var wg = Whalegame.deployed();
     var lastAmount;
