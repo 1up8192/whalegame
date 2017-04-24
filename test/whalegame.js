@@ -11,12 +11,17 @@ contract('Whalegame', function(accounts){
   });
 
   it("valid first player is whale", function() {
+    var wg;
     return Whalegame.deployed().then(function(instance) {
-        var wg = instance;
+        wg = instance;
         wg.play.sendTransaction({from: accounts[0], value: 1000000000});
     }).then(function(){
-        return wg.whale.whaleAddress.call(accounts[0]);
-    }).then(function(whaleAddress) {
+        console.log("hi1")
+        return wg.whale.call(accounts[0]);
+    }).then(function(whale) {
+      console.log("hi2");
+
+      console.log(JSON.stringify(whale));
       assert.equal(whaleAddress, accounts[0], "valid first player should be new whale");
     });
   });
