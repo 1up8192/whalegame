@@ -45,19 +45,23 @@ contract Whalegame {
         owner = msg.sender;
     }
 
-    function  checkGameOver() returns (bool){
-        if (block.number >= whale.blockNumber + currentGameRules.blocksToElapse){
+    function  checkGameOver() constant returns (bool){
+        if (whale.blockNumber != 0 && block.number >= whale.blockNumber + currentGameRules.blocksToElapse){
             return true;
         } else {
             return false;
         }
     }
 
+    function getWhaleAddress() constant returns (address){
+      return whale.whaleAddress;
+    }
+
     function updateWhale(uint riskPercent) private{
         whale = Whale(msg.sender, block.number, msg.value, riskPercent, false);
     }
 
-    function forceRiskRange(uint riskPercent) private returns(uint){
+    function forceRiskRange(uint riskPercent) constant private returns(uint){
         if (riskPercent > maxRisk){
             return maxRisk;
         }
@@ -67,7 +71,7 @@ contract Whalegame {
         return riskPercent;
     }
 
-    function percent(uint amount, uint percent) private returns (uint){
+    function percent(uint amount, uint percent) constant private returns (uint){
         return amount / 100 * percent;
     }
 
@@ -81,7 +85,7 @@ contract Whalegame {
         currentPool = applyFee(this.balance - myStash);
     }
 
-    function addRiskAndRefundRest (uint riskPercent) private {
+    function takeRiskedAmountAndRefundRest (uint riskPercent) private {
       uint risk = percent(msg.value, riskPercent);
       currentPool += risk;
       if(!msg.sender.send(msg.value-risk)){
@@ -91,11 +95,10 @@ contract Whalegame {
 
     function play (uint riskPercent) payable{
         uint forcedRiskPercent = forceRiskRange(riskPercent);
-        uint risk;
         if(!checkGameOver()){
             if (msg.value > whale.amount + percent(whale.amount, stepPercent)){
                 updateWhale(forcedRiskPercent);
-                addRiskAndRefundRest (forcedRiskPercent);
+                takeRiskedAmountAndRefundRest (forcedRiskPercent);
             } else {
                 throw;
             }
@@ -103,7 +106,9 @@ contract Whalegame {
             redeem();
             if (msg.value > currentPool + percent(currentPool, stepPercent)){
                 updateWhale(forcedRiskPercent);
-                addRiskAndRefundRest (forcedRiskPercent);
+                takeRiskedAmountAndRefundRest (forcedRiskPercent);
+            } else {
+                throw;
             }
         }
     }

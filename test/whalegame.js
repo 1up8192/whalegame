@@ -14,7 +14,7 @@ contract('Whalegame', function(accounts){
     var wg;
     return Whalegame.deployed().then(function(instance) {
         wg = instance;
-        wg.play.sendTransaction({from: accounts[0], value: 1000000000});
+        wg.play.sendTransaction(5, {from: accounts[0], value: web3.toWei(1, "ether").value});
     }).then(function(){
         console.log("hi1")
         return wg.whale.call(accounts[0]);
@@ -22,6 +22,22 @@ contract('Whalegame', function(accounts){
       console.log("hi2");
 
       console.log(JSON.stringify(whale));
+      assert.equal(whaleAddress, accounts[0], "valid first player should be new whale");
+    });
+  });
+
+  it("valid first player is whale, getter", function() {
+    var wg;
+    return Whalegame.deployed().then(function(instance) {
+        wg = instance;
+        wg.play.sendTransaction(5, {from: accounts[0], value: web3.toWei(1, "ether").value});
+    }).then(function(){
+        console.log("hi1")
+        return wg.getWhaleAddress.call(accounts[0]);
+    }).then(function(whaleAddress) {
+      console.log("hi2");
+
+      console.log(whaleAddress);
       assert.equal(whaleAddress, accounts[0], "valid first player should be new whale");
     });
   });

@@ -91,9 +91,11 @@ window.App = {
     var whalegame;
     Whalegame.deployed().then(function(instance) {
       whalegame = instance;
-      return whalegame.play(risk, {from: account, value: amount});
-    }).then(function() {
+      return whalegame.play(risk, {from: account, value: amount, gas: 200000});
+    }).then(function(reciept) {
       self.setStatus("Transaction complete!");
+      console.log("Transaction recpept: \n");
+      console.log(reciept);
     }).catch(function(e) {
       console.log(e);
       self.setStatus("Error; see log.");
